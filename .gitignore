@@ -1,2 +1,4 @@
 motor_state
 motor_units
+motor_monitor/motor_monitor
+motor_monitor/src/*.o
