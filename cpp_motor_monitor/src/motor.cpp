@@ -1,0 +1,38 @@
+#include "motor.hpp"
+
+#include <iomanip>
+#include <iostream>
+
+Motor::Motor(int id, double max_temperature_c)
+    : id_{id}, max_temperature_c_{max_temperature_c} {}
+
+void Motor::update_feedback(double position_rad,
+                            double velocity_rad_s,
+                            double temperature_c) {
+    position_rad_ = position_rad;
+    velocity_rad_s_ = velocity_rad_s;
+    temperature_c_ = temperature_c;
+}
+
+bool Motor::enable() {
+    if (temperature_c_ > max_temperature_c_) {
+        return false;
+    }
+
+    enabled_ = true;
+    return true;
+}
+
+void Motor::disable() {
+    enabled_ = false;
+}
+
+void Motor::print_status() const {
+    std::cout << std::fixed << std::setprecision(2)
+              << "Motor " << id_
+              << " | pos=" << position_rad_ << " rad"
+              << " | vel=" << velocity_rad_s_ << " rad/s"
+              << " | temp=" << temperature_c_ << " C"
+              << " | enabled=" << std::boolalpha << enabled_
+              << '\n';
+}

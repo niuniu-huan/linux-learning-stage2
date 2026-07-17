@@ -5,3 +5,4 @@ motor_monitor/src/*.o
 debug_null_motor
 motor_monitor/build/
 cpp_motor_status
+cpp_motor_monitor/build/
