@@ -1,6 +1,14 @@
 #ifndef MOTOR_HPP
 #define MOTOR_HPP
 
+enum class MotorMode {
+    Disabled,
+    Enabled,
+    Fault
+};
+
+const char* motor_mode_to_string(MotorMode mode) noexcept;
+
 class Motor {
 public:
     Motor(int id, double max_temperature_c);
@@ -19,7 +27,7 @@ private:
     double position_rad_{0.0};
     double velocity_rad_s_{0.0};
     double temperature_c_{0.0};
-    bool enabled_{false};
+    MotorMode mode_{MotorMode::Disabled};
 };
 
 #endif
