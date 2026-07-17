@@ -2,3 +2,4 @@ motor_state
 motor_units
 motor_monitor/motor_monitor
 motor_monitor/src/*.o
+debug_null_motor
