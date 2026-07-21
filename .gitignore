@@ -8,3 +8,4 @@ cpp_motor_status
 cpp_motor_monitor/build/
 sanitizer_demo
 file_descriptor_demo
+serial_termios_demo
