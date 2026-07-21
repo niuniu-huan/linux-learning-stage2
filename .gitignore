@@ -11,3 +11,4 @@ file_descriptor_demo
 serial_termios_demo
 motor_protocol
 serial_loopback_demo
+serial_frame_reader_demo
