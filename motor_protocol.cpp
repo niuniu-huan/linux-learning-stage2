@@ -1,15 +1,6 @@
-#include <iomanip>
-#include <iostream>
-#include <optional>
-#include <sstream>
-#include <string>
+#include "motor_protocol.hpp"
 
-struct MotorFeedback {
-    int id;
-    double position_rad;
-    double velocity_rad_s;
-    double temperature_c;
-};
+#include <sstream>
 
 std::optional<MotorFeedback> parse_motor_feedback(const std::string& frame) {
     std::istringstream stream(frame);
@@ -42,22 +33,4 @@ std::optional<MotorFeedback> parse_motor_feedback(const std::string& frame) {
     } catch (const std::exception&) {
         return std::nullopt;
     }
-}
-
-int main() {
-    const std::string frame = "MOTOR,1,1.25,6.28,36.8";
-
-    const auto feedback = parse_motor_feedback(frame);
-    if (!feedback) {
-        std::cerr << "Invalid motor feedback frame.\n";
-        return 1;
-    }
-
-    std::cout << std::fixed << std::setprecision(2)
-              << "Motor " << feedback->id
-              << " | pos=" << feedback->position_rad << " rad"
-              << " | vel=" << feedback->velocity_rad_s << " rad/s"
-              << " | temp=" << feedback->temperature_c << " C\n";
-
-    return 0;
 }

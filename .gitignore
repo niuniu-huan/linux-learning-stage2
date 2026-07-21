@@ -10,3 +10,4 @@ sanitizer_demo
 file_descriptor_demo
 serial_termios_demo
 motor_protocol
+serial_loopback_demo
