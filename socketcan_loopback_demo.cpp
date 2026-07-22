@@ -23,7 +23,7 @@ int open_can_socket(const char* interface_name) {
     std::snprintf(ifr.ifr_name, IFNAMSIZ, "%s", interface_name);
 
     if (ioctl(fd, SIOCGIFINDEX, &ifr) < 0) {
-        std::cerr << "SIOCGIFINDEX failed: " << std::strerror(errno) << '\n';
+        std::cerr << "ioctl SIOCGIFINDEX failed: " << std::strerror(errno) << '\n';
         close(fd);
         return -1;
     }
@@ -41,6 +41,21 @@ int open_can_socket(const char* interface_name) {
     return fd;
 }
 
+bool set_can_filter(int fd, canid_t wanted_id) {
+    can_filter filter{};
+    filter.can_id = wanted_id;
+    filter.can_mask = CAN_SFF_MASK;
+
+    if (setsockopt(fd, SOL_CAN_RAW, CAN_RAW_FILTER,
+                   &filter, sizeof(filter)) != 0) {
+        std::cerr << "setsockopt CAN_RAW_FILTER failed: "
+                  << std::strerror(errno) << '\n';
+        return false;
+    }
+
+    return true;
+}
+
 bool receive_frame(int fd, can_frame& frame, int timeout_ms) {
     pollfd event{};
     event.fd = fd;
@@ -48,7 +63,7 @@ bool receive_frame(int fd, can_frame& frame, int timeout_ms) {
 
     const int ready = poll(&event, 1, timeout_ms);
     if (ready == 0) {
-        std::cerr << "Timed out waiting for CAN frame.\n";
+        std::cerr << "receive timeout\n";
         return false;
     }
 
@@ -80,14 +95,27 @@ int main() {
         return 1;
     }
 
-    can_frame transmitted{};
-    transmitted.can_id = 0x201;
-    transmitted.len = 2;
-    transmitted.data[0] = 0x05;
-    transmitted.data[1] = 0xDC;
+    if (!set_can_filter(receiver_fd, 0x201)) {
+        close(receiver_fd);
+        close(sender_fd);
+        return 1;
+    }
 
-    if (write(sender_fd, &transmitted, sizeof(transmitted)) !=
-        static_cast<ssize_t>(sizeof(transmitted))) {
+    can_frame unrelated{};
+    unrelated.can_id = 0x123;
+    unrelated.len = 1;
+    unrelated.data[0] = 0xAA;
+
+    can_frame motor_frame{};
+    motor_frame.can_id = 0x201;
+    motor_frame.len = 2;
+    motor_frame.data[0] = 0x05;
+    motor_frame.data[1] = 0xDC;
+
+    if (write(sender_fd, &unrelated, sizeof(unrelated)) !=
+            static_cast<ssize_t>(sizeof(unrelated)) ||
+        write(sender_fd, &motor_frame, sizeof(motor_frame)) !=
+            static_cast<ssize_t>(sizeof(motor_frame))) {
         std::cerr << "write failed: " << std::strerror(errno) << '\n';
         close(receiver_fd);
         close(sender_fd);
@@ -105,13 +133,15 @@ int main() {
     }
 
     std::cout << "Received CAN ID: 0x"
-              << std::hex << received.can_id << std::dec << '\n';
-    std::cout << "Data: 0x"
-              << std::hex << std::setw(2) << std::setfill('0')
-              << static_cast<int>(received.data[0])
-              << " 0x" << std::setw(2)
-              << static_cast<int>(received.data[1])
-              << std::dec << '\n';
+              << std::hex << std::uppercase << received.can_id << '\n';
+
+    std::cout << "Data:";
+    for (int i = 0; i < received.len; ++i) {
+        std::cout << " 0x"
+                  << std::setw(2) << std::setfill('0')
+                  << static_cast<int>(received.data[i]);
+    }
+    std::cout << std::dec << '\n';
 
     return 0;
 }
