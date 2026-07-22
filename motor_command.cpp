@@ -1,5 +1,6 @@
 #include "motor_command.hpp"
 
+#include <algorithm>
 #include <cstddef>
 
 namespace {
@@ -25,4 +26,25 @@ std::array<std::uint8_t, 8> encode_motor_currents(
     }
 
     return data;
+}
+
+MotorCurrentCommand make_safe_command(
+    const MotorCurrentCommand& requested,
+    const MotorCommandSafety& safety) {
+    if (!safety.output_enabled || safety.fault_active) {
+        return {};
+    }
+
+    MotorCurrentCommand safe_command{};
+
+    for (std::size_t motor = 0;
+         motor < requested.target_current_raw.size();
+         ++motor) {
+        safe_command.target_current_raw.at(motor) = std::clamp(
+            requested.target_current_raw.at(motor),
+            static_cast<std::int16_t>(-kMaxMotorCurrentRaw),
+            kMaxMotorCurrentRaw);
+    }
+
+    return safe_command;
 }
